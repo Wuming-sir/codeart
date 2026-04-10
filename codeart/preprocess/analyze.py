@@ -26,7 +26,7 @@ def main():
     
     data_in = pickle.load(open(args.data_in, 'rb'))
     fout = open(args.fout, 'w')
-    signal.signal(signal.SIGALRM, timeout_handler)
+    # signal.signal(signal.SIGALRM, timeout_handler) # only works in Linux
     for function in tqdm(data_in):
         meta = {
             'project_name': function['project_name'],
@@ -35,10 +35,10 @@ def main():
             "binary_name": function['binname'],
         }
         # maximum analysis time is 10 seconds
-        signal.alarm(10)
+        # signal.alarm(10)
         try:
           expr_lang_analyzer = ExprLangAnalyzer(function['cfg'])
-          signal.alarm(10)
+          # signal.alarm(10)
           expr_lang_analyzer.print_func_to_jsonl(fout, metadata=meta)
         except Exception as e:
           # if e is not time out
