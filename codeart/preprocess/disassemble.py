@@ -8,20 +8,9 @@ import networkx as nx
 from binary_base import Binarybase
 
 
-SAVEROOT = "./extracted-bins"  # dir of pickle files saved by IDA
-DATAROOT = "./unstrip"  # dir of binaries (not stripped)
-
-
 class BinaryData(Binarybase):
     def __init__(self, unstrip_path):
-        super(BinaryData, self).__init__(unstrip_path)
-        self.fix_up()
-
-    def fix_up(self):
-        for addr in self.addr2name:
-            # incase some functions' instructions are not recognized by IDA
-            idc.create_insn(addr)
-            idc.add_func(addr)
+        pass
 
     def get_asm(self, func):
         instGenerator = idautils.FuncItems(func)
@@ -73,7 +62,6 @@ class BinaryData(Binarybase):
         return nx_graph
 
 
-
     def extract_all(self):
         for func in idautils.Functions():
             if idc.get_segm_name(func) in ['.plt', 'extern', '.init', '.fini']:
@@ -82,11 +70,7 @@ class BinaryData(Binarybase):
             asm_list = self.get_asm(func)
             rawbytes_list = self.get_rawbytes(func)
             cfg = self.get_cfg(func)            
-            unstrip_name = self.addr2name[func]
-            if unstrip_name == -1:
-                name = idc.get_func_name(func)
-            else:
-                name = unstrip_name
+            name = idc.get_func_name(func)
             yield (name, func, asm_list, rawbytes_list, cfg)
 
 
@@ -94,22 +78,17 @@ if __name__ == "__main__":
     import os
     from collections import defaultdict
 
-    print(DATAROOT)
-    print(os.getcwd())
-    assert os.path.exists(DATAROOT), "DATAROOT does not exist"
-    assert os.path.exists(SAVEROOT), "SAVEROOT does not exist"
     print("Current filename: %s" % idc.get_input_file_path())
     binary_abs_path = idc.get_input_file_path()
     # filename = binary_abs_path.split('/')[-1][:-6]
     filename = binary_abs_path.split('/')[-1]
-    unstrip_path = os.path.join(DATAROOT, filename)
-    # unstrip_path = binary_abs_path
+    # unstrip_path = os.path.join(DATAROOT, filename)
+    unstrip_path = binary_abs_path
     idc.auto_wait()
     binary_data = BinaryData(unstrip_path)
 
     saved_dict = defaultdict(lambda: list)
-    saved_path = os.path.join(
-        SAVEROOT, filename + "_extract.pkl")  # unpair data
+    saved_path = os.path.join("./", filename + "_extract.pkl")  # unpair data
     with open(saved_path, 'wb') as f:
         for func_name, func, asm_list, rawbytes_list, cfg in binary_data.extract_all():
             saved_dict[func_name] = [func, asm_list,
